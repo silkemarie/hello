@@ -5,34 +5,31 @@ client = TestClient(app)
 
 
 def test_read_root():
-
-    #when
+    # when
     res = client.get("/")
-    
-    #then
+
+    # then
     assert res.status_code == 200
     assert res.json() == {"Hello": "World"}
 
-def test_create_student_positive_id():
 
-    #given
+def test_create_student_positive_id():
+    # given
     json_blob = {"student_id": 1, "name": "Jens"}
 
-    #when
+    # when
     res = client.post("/students/", json=json_blob)
 
-    #then
+    # then
     assert res.status_code == 200
 
+
 def test_create_student_negative_id():
-
-    #given
+    # given
     json_blob = {"student_id": -1, "name": "Jens"}
-    
-    #when
+
+    # when
     res = client.post("/students/", json=json_blob)
-    
-    #then
+
+    # then
     assert res.status_code != 200
-
-

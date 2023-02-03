@@ -1,10 +1,14 @@
-from typing import Union, Iterable
+from typing import Union
 from fastapi import FastAPI
 from pydantic import BaseModel, validator
 
 app = FastAPI()
 
-students = [{"student_id": 1, "name": "Jens"}, {"student_id": 2, "name": "Bob"}]
+students = [
+    {"student_id": 1, "name": "Jens"},
+    {"student_id": 2, "name": "Bob"},
+]
+
 
 class Student(BaseModel):
     student_id: int
@@ -16,31 +20,42 @@ class Student(BaseModel):
             raise ValueError(f"Expected positive price, received {value}")
         return value
 
+    @validator("student_id")
+    def student_id_unique(cls, value):
+        if value in [student["student_id"] for student in students]:
+            raise ValueError(f"ID is already in use")
+        return value
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
 
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Union[str, None] = None):
     name = q.upper()
     return {"item_id": item_id, "q": name}
 
+
 @app.get("/name/{q}")
 def read_name(q: str):
-    return (q.upper())
+    return q.upper()
+
 
 @app.get("/students")
 def read_students():
     return students
 
+
 @app.post("/students")
 def create_student(student: Student):
     return student
 
+
 @app.put("/students/{student_id}")
 def save_student(student: Student):
     return student
+
 
 @app.patch("/students")
 def edit_student(student: Student):
@@ -48,6 +63,7 @@ def edit_student(student: Student):
         if person["student_id"] == student.student_id:
             person["name"] = student.name
     return students
+
 
 @app.delete("/students/{student_id}")
 def delete_student(student_id: int):
