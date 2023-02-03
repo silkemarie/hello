@@ -4,7 +4,7 @@ from pydantic import BaseModel, validator
 
 app = FastAPI()
 
-students = [{1, "Jens"}]
+students = [{"student_id": 1, "name": "Jens"}, {"student_id": 2, "name": "Bob"}]
 
 class Student(BaseModel):
     student_id: int
@@ -30,23 +30,27 @@ def read_name(q: str):
     return (q.upper())
 
 @app.get("/students")
-def read_students(student: Student):
+def read_students():
     return students
 
-@app.post("/students/")
+@app.post("/students")
 def create_student(student: Student):
     return student
 
 @app.put("/students/{student_id}")
-def save_student(student_id: int, q: str):
-    return {"id": student_id, "name": q}
+def save_student(student: Student):
+    return student
 
-@app.patch("/students/{student_id}")
-def edit_student(student_id: int, q: str):
-    
-    return {"id": student_id, "name": q}
+@app.patch("/students")
+def edit_student(student: Student):
+    students[student.student_id-1]["name"] = student.name
+    return students
 
 @app.delete("/students/{student_id}")
-def delete_student(student_id: int)->list:
-    students.remove(student_id)
+def delete_student(student_id: int):
+    for i in range(len(students)):
+        if students[i]["student_id"] == student_id:
+            del students[i]
+            break
+    print(students)
     return students
