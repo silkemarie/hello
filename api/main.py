@@ -10,17 +10,12 @@ class Student(BaseModel):
     student_id: int
     name: str
 
-    """ @validator("student_id")
+    @validator("student_id")
     def student_id_positive(cls, value):
         if value <= 0:
             raise ValueError(f"Expected positive price, received {value}")
         return value
 
-    @validator("student_id")
-    def student_id_unique(cls, value):
-        if value in students["student_id"]:
-            raise ValueError(f"Student ID {value} already in use")
-        return value """
 
 @app.get("/")
 def read_root():
