@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Iterable
 from fastapi import FastAPI
 from pydantic import BaseModel, validator
 
@@ -10,11 +10,17 @@ class Student(BaseModel):
     student_id: int
     name: str
 
-    @validator("student_id")
+    """ @validator("student_id")
     def student_id_positive(cls, value):
         if value <= 0:
             raise ValueError(f"Expected positive price, received {value}")
         return value
+
+    @validator("student_id")
+    def student_id_unique(cls, value):
+        if value in students["student_id"]:
+            raise ValueError(f"Student ID {value} already in use")
+        return value """
 
 @app.get("/")
 def read_root():
@@ -43,7 +49,9 @@ def save_student(student: Student):
 
 @app.patch("/students")
 def edit_student(student: Student):
-    students[student.student_id-1]["name"] = student.name
+    for person in students:
+        if person["student_id"] == student.student_id:
+            person["name"] = student.name
     return students
 
 @app.delete("/students/{student_id}")
