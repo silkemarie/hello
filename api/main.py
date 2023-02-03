@@ -4,6 +4,8 @@ from pydantic import BaseModel, validator
 
 app = FastAPI()
 
+students = [{1, "Jens"}]
+
 class Student(BaseModel):
     student_id: int
     name: str
@@ -13,8 +15,6 @@ class Student(BaseModel):
         if value <= 0:
             raise ValueError(f"Expected positive price, received {value}")
         return value
-
-students = []
 
 @app.get("/")
 def read_root():
@@ -29,23 +29,25 @@ def read_item(item_id: int, q: Union[str, None] = None):
 def read_name(q: str):
     return (q.upper())
 
+@app.get("/students")
+def read_students(student: Student):
+    return students
 
-@app.post("/student/{student_id}")
+@app.post("/students/{student_id}")
 def create_student(student: Student):
     students.append(student)
     return students
 
-
-@app.put("/student/{student_id}")
+@app.put("/students/{student_id}")
 def save_student(student_id: int, q: str):
     return {"id": student_id, "name": q}
 
-@app.patch("/student/{student_id}")
+@app.patch("/students/{student_id}")
 def edit_student(student_id: int, q: str):
     
     return {"id": student_id, "name": q}
 
-@app.delete("/student/{student_id}")
+@app.delete("/students/{student_id}")
 def delete_student(student_id: int)->list:
     students.remove(student_id)
     return students
