@@ -34,3 +34,5 @@ def test_create_student_negative_id():
     
     #then
     assert res.status_code != 200
+
+
