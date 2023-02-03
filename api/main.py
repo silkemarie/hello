@@ -38,16 +38,15 @@ def create_student(student: Student):
     return student
 
 @app.put("/students/{student_id}")
-def save_student(student_id: int, q: str):
-    return {"id": student_id, "name": q}
+def save_student(student: Student):
+    return student
 
 @app.patch("/students/{student_id}")
 def edit_student(student: Student):
     for i in range(len(students)):
         if students[i]["student_id"] == students.student_id:
-            students[student]
+            students.append(student) 
     return students
-    # only inserts id?
 
 @app.delete("/students/{student_id}")
 def delete_student(student_id: int):
