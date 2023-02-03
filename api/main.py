@@ -33,10 +33,9 @@ def read_name(q: str):
 def read_students(student: Student):
     return students
 
-@app.post("/students/{student_id}")
+@app.post("/students/")
 def create_student(student: Student):
-    students.append(student)
-    return students
+    return student
 
 @app.put("/students/{student_id}")
 def save_student(student_id: int, q: str):
@@ -51,6 +50,3 @@ def edit_student(student_id: int, q: str):
 def delete_student(student_id: int)->list:
     students.remove(student_id)
     return students
-
-#to do: watch videoes, write tests, commit often
-#add pydantic import 
