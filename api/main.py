@@ -33,7 +33,7 @@ def read_name(q: str):
 def read_students():
     return students
 
-@app.post("/students/")
+@app.post("/students")
 def create_student(student: Student):
     return student
 
@@ -41,11 +41,10 @@ def create_student(student: Student):
 def save_student(student: Student):
     return student
 
-@app.patch("/students/{student_id}")
+@app.patch("/students")
 def edit_student(student: Student):
-    print(students[student.student_id-1].app)
-    """ students[student.student_id]["name"].pop(student.student_id+1) """
-    return student
+    students[student.student_id-1]["name"] = student.name
+    return students
 
 @app.delete("/students/{student_id}")
 def delete_student(student_id: int):
