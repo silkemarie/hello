@@ -33,7 +33,7 @@ class StudentBase(BaseModel):
     name: str
 
 class StudentCreate(StudentBase):
-    pass
+    name: str
 
 class Student(StudentBase):
 

@@ -19,6 +19,7 @@ def get_db():
     finally:
         db.close
 
+
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
@@ -49,14 +50,14 @@ def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return items
 
 # Students
-@app.get("/students", response_model=List[schemas.Student])
-def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    students = crud.get_students(db, skip=skip, limit=limit)
-    return students
-
 @app.post("/students/", response_model=schemas.Student)
 def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
     return crud.create_student(db=db, student=student)
+
+@app.get("/students/", response_model=List[schemas.Student])
+def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    students = crud.get_students(db, skip=skip, limit=limit)
+    return students
 
 @app.get("/students/{student_id}", response_model=schemas.Student)
 def read_student(student_id: int, db: Session = Depends(get_db)):
