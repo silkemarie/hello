@@ -47,10 +47,9 @@ def get_students(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Student).offset(skip).limit(limit).all()
 
 
-def create_student(db: Session, user: schemas.StudentCreate):
-    fake_hashed_password = user.password + "notreallyhashed"
-    db_user = models.User(email=user.email, hashed_password=fake_hashed_password)
-    db.add(db_user)
+def create_student(db: Session, student: schemas.StudentCreate):
+    db_student = models.Student(name=student.name)
+    db.add(db_student)
     db.commit()
-    db.refresh(db_user)
-    return db_user
+    db.refresh(db_student)
+    return db_student
