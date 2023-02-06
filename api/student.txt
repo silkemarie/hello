@@ -1,11 +1,10 @@
 from pydantic import BaseModel, validator
-# ^slet?
 
-""" students = [
+
+students = [
     {"student_id": 1, "name": "Jens"},
     {"student_id": 2, "name": "Bob"},
 ]
- """
 
 
 

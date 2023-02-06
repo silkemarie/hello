@@ -25,3 +25,9 @@ class Item(Base):
 
     owner = relationship("User", back_populates="items")
 
+class Student(Base):
+    __tablename__ = "students"
+
+    student_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+
