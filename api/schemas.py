@@ -33,9 +33,10 @@ class StudentBase(BaseModel):
     name: str
 
 class StudentCreate(StudentBase):
-    name: str
+    pass
 
 class Student(StudentBase):
-
+    student_id: int
+    
     class Config:
         orm_mode = True

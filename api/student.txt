@@ -24,7 +24,7 @@ class Student(BaseModel):
             raise ValueError(f"ID is already in use")
         return value 
         
- @app.get("/")
+@app.get("/")
 def read_root():
     return {"Hello": "World"}
 

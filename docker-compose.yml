@@ -1,0 +1,15 @@
+
+services:
+  db:
+    image: postgres
+    container_name: postgres
+    restart: always
+    ports:
+      - "6500:5432"
+    environment:
+      - ./.env
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+  
+volumes:
+  postgres-db:
