@@ -69,5 +69,4 @@ def delete_student(student_id: int):
         if students[i]["student_id"] == student_id:
             del students[i]
             break
-    print(students)
     return students """
