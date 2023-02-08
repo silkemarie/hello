@@ -57,9 +57,9 @@ def create_student(db: Session, student: schemas.StudentCreate):
     db.refresh(db_student)
     return db_student
 
-def update_student(db: Session, student: schemas.StudentCreate):
-    db_student = models.Student(name=student.name)
-    db.add(db_student)
+def update_student(db: Session, student_id: int, student: schemas.StudentCreate):
+    db_student = db.query(models.Student).filter(models.Student.student_id == student_id).first()
+    db_student.name = student.name
     db.commit()
     return db_student
 

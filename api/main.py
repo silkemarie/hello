@@ -81,9 +81,7 @@ def read_student(student_id: int, db: Session = Depends(get_db)):
 
 @app.put("/students/{student_id}", response_model=schemas.Student)
 def update_student(student_id: int, student: schemas.StudentCreate, db: Session = Depends(get_db)):
-    db_student = db.query(models.Student).filter(models.Student.student_id == student_id).first()
-    db_student.name = student.name
-    db.commit()
+    db_student = crud.update_student(db, student_id=student_id, student=student)
     return db_student
 
 @app.delete("/students/{student_id}", response_model=schemas.Student)
