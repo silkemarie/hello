@@ -57,6 +57,11 @@ def create_student(db: Session, student: schemas.StudentCreate):
     db.refresh(db_student)
     return db_student
 
+def update_student(db: Session, student: schemas.StudentCreate):
+    db_student = models.Student(name=student.name)
+    db.add(db_student)
+    db.commit()
+    return db_student
 
 def delete_student(db: Session, student_id: int):
     db_student = (
