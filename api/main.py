@@ -1,74 +1,72 @@
-from fastapi import FastAPI
-from pydantic import BaseModel, validator
+from typing import List
+from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy.orm import Session
+
+from . import crud, models, schemas
+from .database import SessionLocal, engine
+
+models.Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
-students = [
-    {"student_id": 1, "name": "Jens"},
-    {"student_id": 2, "name": "Bob"},
-]
 
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close
 
-class Student(BaseModel):
-    student_id: int
-    name: str
-
-    @validator("student_id")
-    def student_id_positive(cls, value):
-        if value <= 0:
-            raise ValueError(f"Expected positive price, received {value}")
-        return value
-
-    @validator("student_id")
-    def student_id_unique(cls, value):
-        if value in [student["student_id"] for student in students]:
-            raise ValueError(f"ID is already in use")
-        return value
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str):
-    name = q.upper()
-    return {"item_id": item_id, "q": name}
+@app.post("/users/", response_model=schemas.User)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return crud.create_user(db=db, user=user)
 
+@app.get("/users", response_model=List[schemas.User])
+def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    users = crud.get_users(db, skip=skip, limit=limit)
+    return users
 
-@app.get("/name/{q}")
-def read_name(q: str):
-    return q.upper()
+@app.get("/users/{user_id}", response_model=schemas.User)
+def read_user(user_id: int, db: Session = Depends(get_db)):
+    db_user = crud.get_user(db, user_id=user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
 
+@app.post("/users/{user_id}/items/", response_model=schemas.Item)
+def create_item_for_user(
+    user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)):
+    return crud.create_user_item(db=db, item=item, user_id=user_id)
 
-@app.get("/students")
-def read_students():
+@app.get("/items/", response_model=List[schemas.Item])
+def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    items = crud.get_items(db, skip=skip, limit=limit)
+    return items
+
+# Students
+@app.post("/students/", response_model=schemas.Student)
+def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
+    return crud.create_student(db=db, student=student)
+
+@app.get("/students/", response_model=List[schemas.Student])
+def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    students = crud.get_students(db, skip=skip, limit=limit)
     return students
 
-
-@app.post("/students")
-def create_student(student: Student):
-    return student
-
-
-@app.put("/students/{student_id}")
-def save_student(student: Student):
-    return student
-
-
-@app.patch("/students")
-def edit_student(student: Student):
-    for person in students:
-        if person["student_id"] == student.student_id:
-            person["name"] = student.name
-    return students
-
-
-@app.delete("/students/{student_id}")
-def delete_student(student_id: int):
-    for i in range(len(students)):
-        if students[i]["student_id"] == student_id:
-            del students[i]
-            break
-    print(students)
-    return students
+@app.get("/students/{student_id}", response_model=schemas.Student)
+def read_student(student_id: int, db: Session = Depends(get_db)):
+    db_student = crud.get_student(db, student_id=student_id)
+    if db_student is None:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return db_student
