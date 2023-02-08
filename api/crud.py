@@ -53,3 +53,9 @@ def create_student(db: Session, student: schemas.StudentCreate):
     db.commit()
     db.refresh(db_student)
     return db_student
+
+def delete_student(db: Session, student_id: int):
+    db_student = db.query(models.Student).filter(models.Student.student_id == student_id).first()
+    db.delete(db_student)
+    db.commit()
+    return db_student
