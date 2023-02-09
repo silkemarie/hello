@@ -2,7 +2,7 @@ from typing import List
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
-from . import crud, models, schemas
+from api import crud, models, schemas
 from .database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -25,7 +25,7 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.post("/users/", response_model=schemas.User)
+@app.post("/users", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
@@ -47,26 +47,26 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     return db_user
 
 
-@app.post("/users/{user_id}/items/", response_model=schemas.Item)
+@app.post("/users/{user_id}/items", response_model=schemas.Item)
 def create_item_for_user(
     user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)
 ):
     return crud.create_user_item(db=db, item=item, user_id=user_id)
 
 
-@app.get("/items/", response_model=List[schemas.Item])
+@app.get("/items", response_model=List[schemas.Item])
 def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     items = crud.get_items(db, skip=skip, limit=limit)
     return items
 
 
 # Students
-@app.post("/students/", response_model=schemas.Student)
+@app.post("/students", response_model=schemas.Student)
 def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
     return crud.create_student(db=db, student=student)
 
 
-@app.get("/students/", response_model=List[schemas.Student])
+@app.get("/students", response_model=List[schemas.Student])
 def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     students = crud.get_students(db, skip=skip, limit=limit)
     return students
