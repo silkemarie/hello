@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Union
 from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 from api import crud, models, schemas
 from .database import SessionLocal, engine
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -40,8 +41,7 @@ fake_users_db = {
 }
 
 # Should be moved to schemas.py
-class UserInDB(schemas.User):
-    hashed_password: str
+
 
 @app.get("/")
 def read_root():
@@ -52,19 +52,33 @@ def read_root():
 def fake_hash_password(password: str):
     return "fakehashed" + password
 
-def fake_decode_token(token):
-    return schemas.User(
-        username = token + "fakedecoded", email="john@example.com", first_name="Jane", last_name="Doe"
-    )
 
-@app.get("/dogs")
-async def read_dogs(token: str = Depends(oauth2_scheme)):
-    return {"token": token}
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+class User(BaseModel):
+    username: str
+    email: Union[str, None] = None
+    full_name: Union[str, None] = None
+    disabled: Union[bool, None] = None
+
+
+class UserInDB(User):
+    hashed_password: str
+
 
 def get_user(db, username: str):
     if username in db:
         user_dict = db[username]
-        return schemas.UserInDB(**user_dict)
+        return UserInDB(**user_dict)
+
+
+def fake_decode_token(token):
+    # This doesn't provide any security at all
+    # Check the next version
+    user = get_user(fake_users_db, token)
+    return user
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     user = fake_decode_token(token)
@@ -76,26 +90,34 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         )
     return user
 
-async def get_current_active_user(current_user: schemas.User = Depends(get_current_user)):
+
+async def get_current_active_user(current_user: User = Depends(get_current_user)):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
 
 @app.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user_dict = fake_users_db.get(form_data.username)
     if not user_dict:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-    user = schemas.UserInDB(**user_dict)
+    user = UserInDB(**user_dict)
     hashed_password = fake_hash_password(form_data.password)
     if not hashed_password == user.hashed_password:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     return {"access_token": user.username, "token_type": "bearer"}
 
+
 @app.get("/users/me")
-async def read_users_me(current_user: schemas.User = Depends(get_current_user)):
+async def read_users_me(current_user: User = Depends(get_current_active_user)):
     return current_user
+
+@app.get("/dogs")
+async def read_dogs(token: str = Depends(oauth2_scheme)):
+    return {"token": token}
+
 
 
 @app.post("/users", response_model=schemas.User)
