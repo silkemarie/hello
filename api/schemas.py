@@ -20,7 +20,11 @@ class Item(ItemBase):
 
 
 class UserBase(BaseModel):
+    username: str
     email: str
+    first_name: Union[str, None] = None
+    last_name: Union[str, None] = None
+    disabled: Union[bool, None] = None
 
 
 class UserCreate(UserBase):
@@ -31,13 +35,14 @@ class User(UserBase):
     id: int
     is_active: bool
     items: List[Item] = []
-
+        
     class Config:
         orm_mode = True
 
 
 class StudentBase(BaseModel):
-    name: str
+    first_name: str
+    last_name: str
 
 
 class StudentCreate(StudentBase):
