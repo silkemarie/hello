@@ -6,7 +6,7 @@
 - Pydantic
 
 ## Docker
-```Hello user$ docker-compose up --build```
+```docker compose up --build```
 
 ## Run
 ```poetry run uvicorn api.main:app --reload```
