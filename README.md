@@ -13,7 +13,7 @@
 
 
 ## Postgres
-Run postgres: ```Sudo -u postgres psql```
+Run postgres: ```sudo -u postgres psql```
 
 Show databases: ```\l```
 
@@ -21,7 +21,7 @@ Use databases: ```\c```
 
 Show tables: ```\dt```
 
-
+Restart postgres server: ```sudo service postgresql restart```
 
 ## Author
 
