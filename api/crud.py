@@ -35,8 +35,11 @@ def create_user_item(db: Session, item: schemas.ItemCreate, user_id: int):
     db.refresh(db_item)
     return db_item
 
+
 def get_student(db: Session, student_id: int):
-    return db.query(models.Student).filter(models.Student.student_id == student_id).first()
+    return (
+        db.query(models.Student).filter(models.Student.student_id == student_id).first()
+    )
 
 
 def get_student_by_name(db: Session, name: str):
@@ -54,8 +57,16 @@ def create_student(db: Session, student: schemas.StudentCreate):
     db.refresh(db_student)
     return db_student
 
-def delete_student(db: Session, student_id: int):
+def update_student(db: Session, student_id: int, student: schemas.StudentCreate):
     db_student = db.query(models.Student).filter(models.Student.student_id == student_id).first()
+    db_student.name = student.name
+    db.commit()
+    return db_student
+
+def delete_student(db: Session, student_id: int):
+    db_student = (
+        db.query(models.Student).filter(models.Student.student_id == student_id).first()
+    )
     db.delete(db_student)
     db.commit()
     return db_student

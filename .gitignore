@@ -1,6 +1,7 @@
 database.py
 config.txt
 settings.py
+.vscode/launch.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

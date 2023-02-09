@@ -32,10 +32,12 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
     return crud.create_user(db=db, user=user)
 
+
 @app.get("/users", response_model=List[schemas.User])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = crud.get_users(db, skip=skip, limit=limit)
     return users
+
 
 @app.get("/users/{user_id}", response_model=schemas.User)
 def read_user(user_id: int, db: Session = Depends(get_db)):
@@ -44,25 +46,31 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
+
 @app.post("/users/{user_id}/items/", response_model=schemas.Item)
 def create_item_for_user(
-    user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)):
+    user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)
+):
     return crud.create_user_item(db=db, item=item, user_id=user_id)
+
 
 @app.get("/items/", response_model=List[schemas.Item])
 def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     items = crud.get_items(db, skip=skip, limit=limit)
     return items
 
+
 # Students
 @app.post("/students/", response_model=schemas.Student)
 def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
     return crud.create_student(db=db, student=student)
 
+
 @app.get("/students/", response_model=List[schemas.Student])
 def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     students = crud.get_students(db, skip=skip, limit=limit)
     return students
+
 
 @app.get("/students/{student_id}", response_model=schemas.Student)
 def read_student(student_id: int, db: Session = Depends(get_db)):
@@ -71,11 +79,14 @@ def read_student(student_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Student not found")
     return db_student
 
+@app.put("/students/{student_id}", response_model=schemas.Student)
+def update_student(student_id: int, student: schemas.StudentCreate, db: Session = Depends(get_db)):
+    db_student = crud.update_student(db, student_id=student_id, student=student)
+    return db_student
+
 @app.delete("/students/{student_id}", response_model=schemas.Student)
 def delete_student(student_id: int, db: Session = Depends(get_db)):
     db_student = crud.delete_student(db, student_id=student_id)
     if db_student is None:
         raise HTTPException(status_code=404, detail="Student not found")
     return db_student
-
- 
