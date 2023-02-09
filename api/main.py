@@ -54,7 +54,7 @@ def fake_hash_password(password: str):
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-""" class User(BaseModel):
+class User(BaseModel):
     username: str
     email: Union[str, None] = None
     full_name: Union[str, None] = None
@@ -62,24 +62,22 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 class UserInDB(User):
-    hashed_password: str """
+    hashed_password: str
 
 
 def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return schemas.UserInDB(**user_dict)
+    return db.query(models.User).filter(models.User.username == username).first()
 
 
-def fake_decode_token(token):
-    # This doesn't provide any security at all
-    # Check the next version
-    user = get_user(fake_users_db, token)
-    return user
+def decode_token(db, token):
+    user = get_user(db, token)
+    if user:
+        return user
+    return None
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = fake_decode_token(token)
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    user = decode_token(db, token)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -89,18 +87,17 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 
-async def get_current_active_user(current_user: schemas.User = Depends(get_current_user)):
+async def get_current_active_user(current_user: User = Depends(get_current_user)):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 
 @app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user_dict = fake_users_db.get(form_data.username)
-    if not user_dict:
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = get_user(db, form_data.email)
+    if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-    user = schemas.UserInDB(**user_dict)
     hashed_password = fake_hash_password(form_data.password)
     if not hashed_password == user.hashed_password:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
@@ -109,20 +106,18 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 @app.get("/users/me")
-async def read_users_me(current_user: schemas.User = Depends(get_current_active_user)):
+async def read_users_me(current_user: User = Depends(get_current_active_user)):
     return current_user
 
-@app.get("/dogs")
-async def read_dogs(token: str = Depends(oauth2_scheme)):
-    return {"token": token}
+# End of Auth
 
 
 
 @app.post("/users", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    #db_user = crud.create_user(db, email=user.email)
+    #if db_user:
+    #    raise HTTPException(status_code=400, detail="Email already registered")
     return crud.create_user(db=db, user=user)
 
 

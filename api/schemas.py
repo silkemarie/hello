@@ -19,25 +19,22 @@ class Item(ItemBase):
         orm_mode = True
 
 
-""" class UserBase(BaseModel):
-    email: str """
-
-class User(BaseModel):
+class UserBase(BaseModel):
     username: str
-    email: Union[str, None] = None
+    email: str
     full_name: Union[str, None] = None
-    disabled: Union[bool, None] = None
 
 
-class UserInDB(User):
+class UserCreate(UserBase):
+    username: str
+    email: str
+    password: str
+
+
+class UserInDB(UserCreate):
     hashed_password: str 
 
-
-class UserCreate(User):
-    password: str
-"""
-
-class User(User):
+class User(UserBase):
     id: int
     is_active: bool
     items: List[Item] = []
@@ -47,7 +44,7 @@ class User(User):
 
 class UserInDB(User):
     hashed_password: str
-"""
+
 
 class StudentBase(BaseModel):
     first_name: str
