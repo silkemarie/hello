@@ -6,8 +6,6 @@ services:
     restart: always
     ports:
       - "5432:5432"
-    environment:
-      - ./.env
     volumes:
       - postgres-db:/var/lib/postgresql/data
   
