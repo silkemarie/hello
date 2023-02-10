@@ -23,7 +23,6 @@ def get_db():
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -32,20 +31,6 @@ def read_root():
 # Auth
 def fake_hash_password(password: str):
     return "fakehashed" + password
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-
-""" class User(BaseModel):
-    username: str
-    email: Union[str, None] = None
-    full_name: Union[str, None] = None
-    disabled: Union[bool, None] = None
-
-
-class UserInDB(User):
-    hashed_password: str """
 
 
 def get_user(db, username: str):
