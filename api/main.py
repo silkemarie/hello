@@ -1,13 +1,21 @@
+from datetime import datetime, timedelta
 from typing import List, Union
 from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 from api import crud, models, schemas
 from .database import SessionLocal, engine
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from passlib.context import CryptContext
+from jose import JWTError, jwt
 
 models.Base.metadata.create_all(bind=engine)
 
+# Auth
+SECRET_KEY = "5241868656cce937807f784e95360d494b589314bce9f4c8e99e71ab67d7c825"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# change to: .env[SECRET_KEY]
 
 app = FastAPI()
 
@@ -20,55 +28,79 @@ def get_db():
         db.close
 
 # Auth
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
 
-
-# Auth
-def fake_hash_password(password: str):
-    return "fakehashed" + password
-
+def get_password_hash(password):
+    return pwd_context.hash(password)
 
 def get_user(db, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
 
+def authenticate_user(db, username: str, password: str):
+    user = get_user(db, username)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
 
-def decode_token(db, token):
+""" def decode_token(db, token):
     user = get_user(db, token)
     if user:
         return user
-    return None
+    return None """
+
+def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jtw = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jtw
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    user = decode_token(db, token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = schemas.TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
+    user = get_user(db, username=token_data.username)
+    if user is None:
+        raise credentials_exception
     return user
 
 
-
-
-@app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = get_user(db, form_data.username)
-   
-    """  print(form_data.password)
+@app.post("/token", response_model=schemas.Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    hashed_password = fake_hash_password(form_data.password)
-    if not hashed_password == user.hashed_password:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    """
-    return {"access_token": user.username, "token_type": "bearer"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @app.get("/users/me")
@@ -78,13 +110,16 @@ async def read_users_me(user: schemas.User = Depends(get_current_user)):
 # End of Auth
 
 
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
 
 @app.post("/users", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    #db_user = crud.create_user(db, email=user.email)
-    #if db_user:
-    #    raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
+    hashed_password = get_password_hash(user.password)
+    user_in_db = schemas.UserCreate(username=user.username, email=user.email, password=hashed_password)
+    return crud.create_user(db=db, user=user_in_db)
 
 
 @app.get("/users", response_model=List[schemas.User])
