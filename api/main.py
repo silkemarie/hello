@@ -7,17 +7,18 @@ from .database import SessionLocal, engine
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from decouple import config
 
 models.Base.metadata.create_all(bind=engine)
 
 # Auth
-SECRET_KEY = "5241868656cce937807f784e95360d494b589314bce9f4c8e99e71ab67d7c825"
+SECRET_KEY = config("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# change to: .env[SECRET_KEY]
 
 app = FastAPI()
+
 
 # Dependency
 def get_db():
@@ -26,6 +27,7 @@ def get_db():
         yield db
     finally:
         db.close
+
 
 # Auth
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -36,11 +38,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password):
     return pwd_context.hash(password)
 
+
 def get_user(db, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
+
 
 def authenticate_user(db, username: str, password: str):
     user = get_user(db, username)
@@ -62,7 +67,9 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
     return encoded_jtw
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -83,7 +90,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 
 
 @app.post("/token", response_model=schemas.Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -102,8 +111,6 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 async def read_users_me(user: schemas.User = Depends(get_current_user)):
     return user
 
-# End of Auth
-
 
 @app.get("/")
 def read_root():
@@ -113,7 +120,9 @@ def read_root():
 @app.post("/users", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     hashed_password = get_password_hash(user.password)
-    user_in_db = schemas.UserCreate(username=user.username, email=user.email, password=hashed_password)
+    user_in_db = schemas.UserCreate(
+        username=user.username, email=user.email, password=hashed_password
+    )
     return crud.create_user(db=db, user=user_in_db)
 
 
@@ -163,10 +172,14 @@ def read_student(student_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Student not found")
     return db_student
 
+
 @app.put("/students/{student_id}", response_model=schemas.Student)
-def update_student(student_id: int, student: schemas.StudentCreate, db: Session = Depends(get_db)):
+def update_student(
+    student_id: int, student: schemas.StudentCreate, db: Session = Depends(get_db)
+):
     db_student = crud.update_student(db, student_id=student_id, student=student)
     return db_student
+
 
 @app.delete("/students/{student_id}", response_model=schemas.Student)
 def delete_student(student_id: int, db: Session = Depends(get_db)):

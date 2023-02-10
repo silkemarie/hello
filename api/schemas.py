@@ -23,8 +23,9 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
-    username: Union[str, None] = None
+    username: str
 
 
 class UserBase(BaseModel):
@@ -40,23 +41,20 @@ class UserCreate(UserBase):
 
 
 class UserInDB(UserCreate):
-    hashed_password: str 
+    hashed_password: str
+
 
 class User(UserBase):
     id: int
     is_active: bool
     items: List[Item] = []
-        
+
     class Config:
         orm_mode = True
 
-class UserInDB(User):
-    hashed_password: str
-
 
 class StudentBase(BaseModel):
-    first_name: str
-    last_name: str
+    name: str
 
 
 class StudentCreate(StudentBase):
