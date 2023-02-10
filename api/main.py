@@ -50,11 +50,6 @@ def authenticate_user(db, username: str, password: str):
         return False
     return user
 
-""" def decode_token(db, token):
-    user = get_user(db, token)
-    if user:
-        return user
-    return None """
 
 def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
     to_encode = data.copy()
