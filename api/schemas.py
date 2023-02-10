@@ -37,7 +37,6 @@ class UserCreate(UserBase):
     username: str
     email: str
     password: str
-  
 
 
 class UserInDB(UserCreate):
