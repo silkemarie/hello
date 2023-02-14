@@ -19,12 +19,29 @@ class Item(ItemBase):
         orm_mode = True
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str
+
+
 class UserBase(BaseModel):
+    username: str
     email: str
+    full_name: Union[str, None] = None
 
 
 class UserCreate(UserBase):
+    username: str
+    email: str
     password: str
+
+
+class UserInDB(UserCreate):
+    hashed_password: str
 
 
 class User(UserBase):
